@@ -37,6 +37,7 @@ coding!
 - Gagan: [GitHub](https://github.com/gagansingh5) / [LinkedIn](https://www.linkedin.com/in/gagansingh5/)
 - Bryan: [GitHub](https://github.com/speedygonzalez97) / [LinkedIn](https://www.linkedin.com/in/gonzalezbryan/)
 - Richard: [GitHub](https://github.com/RichardZhang01) / [LinkedIn](https://www.linkedin.com/in/richard-zhiyuan-zhang/)
+- David: [GitHub](https://github.com/dhayv) / [LinkedIn](https://www.linkedin.com/in/david-h-60560b61/)
 
    ...
 - Teammate name #n: [GitHub](https://github.com/ghaccountname) / [LinkedIn](https://linkedin.com/in/liaccountname)
