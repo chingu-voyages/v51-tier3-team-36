@@ -42,7 +42,7 @@ export class AuthController {
 
     const jwt = req.user as { access_token: string };
     // redirect  to  frontend with JWT token
-    res.redirect(`http://localhost:3000/auth/success?token=${jwt.access_token}`);
+    res.redirect(`http://localhost:5173/auth/success?token=${jwt.access_token}`);
   }
 
   @UseGuards(JwtAuthGuard)
