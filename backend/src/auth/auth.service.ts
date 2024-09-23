@@ -1,29 +1,77 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
-import {}
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { UsersService } from 'src/users/users.service';
+import { JwtService } from '@nestjs/jwt';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
+import * as bcrypt from 'bcrypt';
+import { JwtPayload } from './interfaces/jwt-payload.interfaces';
+import { RegisterDto } from './dto/create-auth.dto';
+import { GoogleUserDto } from './dto/google-auth.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private userService: UsersService) {}
+  constructor(private usersService: UsersService, private jwtService: JwtService) {}
 
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  async validateUser(email: string, password: string): Promise<UserDocument | null> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.password) {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (isMatch) {
+        return user;
+      }
+    }
+    return null;
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  // manual registration
+  async validateUserRegistration(user: RegisterDto): Promise<{access_token: string}> {
+    const userCheck = await this.usersService.findByEmail(user.email);
+
+    if (userCheck) {
+      throw new ConflictException('Email already exists')
+    }
+
+    const hashPassword = await bcrypt.hash(user.password, 10);
+    const newUser = await this.usersService.create({
+      name: user.name,
+      email: user.email,
+      password: hashPassword
+    });
+    return this.login(newUser)
+
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
+  // Google OAuth registration
+  async validateGoogleUser(googleUser: GoogleUserDto): Promise<{ access_token: string }> {
+    let user = await this.usersService.findByGoogleId(googleUser.googleId);
+
+    if (!user) {
+      user = await this.usersService.findByEmail(googleUser.email);
+      if (user) {
+        user.googleId = googleUser.googleId;
+        await user.save();
+      } else {
+        user = await this.usersService.createUserGoogle({
+          name: googleUser.name,
+          email: googleUser.email,
+          googleId: googleUser.googleId
+        });
+      }
+    }
+
+    const payload: JwtPayload = { email: user.email, sub: user._id.toString() };
+    const access_token = this.jwtService.sign(payload);
+
+    return { access_token };
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  async login(user: UserDocument): Promise<{ access_token: string }> {
+    const payload: JwtPayload = { email: user.email, sub: user._id.toString() };
+    return {
+      access_token: this.jwtService.sign(payload)
+    };
   }
 }
