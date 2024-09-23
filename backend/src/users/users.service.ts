@@ -9,16 +9,16 @@ import {User, UserDocument} from './schemas/user.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec()
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).exec()
     if (!user) {
       throw new NotFoundException(`User with #${id} could not be found`)
@@ -26,7 +26,7 @@ export class UsersService {
     return user;
   }
 
-  async updateOne(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateOne(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
     const updatedUser = this.userModel
     .findByIdAndUpdate(id, updateUserDto, {new: true}).exec();
 
@@ -36,7 +36,7 @@ export class UsersService {
     return updatedUser;
   }
 
-  async remove(id: string): Promise<User> {
+  async remove(id: string): Promise<UserDocument> {
     const deleteUser = await this.userModel.findByIdAndDelete(id).exec()
     if (!deleteUser) {
       throw new NotFoundException((`User with #${id} could not be found`))
@@ -44,15 +44,15 @@ export class UsersService {
     return deleteUser ;
   }
 
-  async findByEmail(email: string): Promise<User> | null {
+  async findByEmail(email: string): Promise<UserDocument> | null {
     return this.userModel.findOne({email}).exec()
   }
 
-  async findByGoogleId(googleId: string): Promise<User> | null {
+  async findByGoogleId(googleId: string): Promise<UserDocument> | null {
     return this.userModel.findOne({googleId}).exec()
   }
 
-  async createUserGoogle(googleUser: Partial<User>): Promise<User> {
+  async createUserGoogle(googleUser: Partial<UserDocument>): Promise<UserDocument> {
     try {
       const createUser = new this.userModel({
         name: googleUser.name,
