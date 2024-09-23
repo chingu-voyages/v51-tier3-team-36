@@ -1,34 +1,54 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { RegisterDto } from './dto/create-auth.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { UserDocument } from 'src/users/schemas/user.schema';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Request, Response } from 'express';
+
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('register')
+  async register(@Body() user: RegisterDto) {
+    return this.authService.validateUserRegistration(user);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Req() req: Request) {
+    return this.authService.login(req.user as UserDocument);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+  @UseGuards(AuthGuard('google'))
+  @Get('google')
+  async googleAuth() {
+    
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
+  @UseGuards(AuthGuard('google'))
+  @Get('google/callback')
+  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const token = req.user as {access_token: string };
+    
+    res.cookie('access_token', token.access_token, {
+      maxAge: 2592000000,
+      sameSite: true,
+      secure: false,
+    });
+
+    const jwt = req.user as { access_token: string };
+    // redirect  to  frontend with JWT token
+    res.redirect(`http://localhost:3000/auth/success?token=${jwt.access_token}`);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req: Request) {
+    return req.user;
   }
 }
+
