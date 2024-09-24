@@ -44,12 +44,23 @@ export class UsersService {
     return deleteUser ;
   }
 
-  async findByEmail(email: string): Promise<UserDocument> | null {
-    return this.userModel.findOne({email}).exec()
+  // select function to include excluded files in schema
+  async findByEmail(email: string, passwordIncluded: boolean = false): Promise<UserDocument | null> {
+    const query = this.userModel.findOne({ email });
+    if (passwordIncluded) {
+      query.select('+password');
+    }
+    return query.exec();
   }
 
-  async findByGoogleId(googleId: string): Promise<UserDocument> | null {
-    return this.userModel.findOne({googleId}).exec()
+
+  
+  async findByGoogleId(googleId: string, googleIdIncluded: boolean = false): Promise<UserDocument | null> {
+    const query = this.userModel.findOne({ googleId });
+    if (googleIdIncluded) {
+      query.select('+googleId');
+    }
+    return query.exec();
   }
 
   async createUserGoogle(googleUser: Partial<UserDocument>): Promise<UserDocument> {

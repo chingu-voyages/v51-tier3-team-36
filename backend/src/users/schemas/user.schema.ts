@@ -2,7 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 import * as bcrypt from 'bcrypt'
 
-export type UserDocument = HydratedDocument<User>;
+export type UserDocument = HydratedDocument<User> & {
+  
+};
 
 @Schema()
 export class User {
@@ -12,10 +14,10 @@ export class User {
   @Prop({required: true, unique: true})
   email: string;
 
-  @Prop()
+  @Prop({select: false}) //
   password?: string;
 
-  @Prop()
+  @Prop({select: false})
   googleId?: string;
 
   // association
@@ -42,4 +44,14 @@ UserSchema.pre<UserDocument>('save', async function (next) {
   }
   next();
 
+  
+
 })
+
+// exclude sensitive fields from responses at database level
+UserSchema.set('toJSON', {
+  transform: (doc, ret, options) => {
+    delete ret.password;
+    delete ret.googleId;
+    return ret;
+  }, })
