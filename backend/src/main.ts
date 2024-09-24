@@ -2,8 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
+declare const module: any
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.setGlobalPrefix('api')
 
   app.enableCors({
@@ -22,6 +25,12 @@ async function bootstrap() {
   SwaggerModule.setup('/', app, document)
 
   await app.listen(3000);
+
+  // hot module replacement
+  if (module.hot) {
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
+  }
 }
 bootstrap();
 
