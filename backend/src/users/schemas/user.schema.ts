@@ -39,7 +39,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.pre<UserDocument>('save', async function (next) {
   if (this.password && this.isModified('password')) {
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
   next();
@@ -51,7 +51,10 @@ UserSchema.pre<UserDocument>('save', async function (next) {
 // exclude sensitive fields from responses at database level
 UserSchema.set('toJSON', {
   transform: (doc, ret, options) => {
+    ret.id = ret._id.toString(); 
+    delete ret._id;
     delete ret.password;
     delete ret.googleId;
+    delete ret.__v;
     return ret;
   }, })
