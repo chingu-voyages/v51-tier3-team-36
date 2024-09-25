@@ -17,12 +17,12 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    if (user.password) {
+    
       const isMatch = await bcrypt.compare(password, user.password);
       if (isMatch) {
         return user;
       }
-    }
+    
     return null;
   }
 
@@ -34,11 +34,11 @@ export class AuthService {
       throw new ConflictException('Email already exists')
     }
 
-    const hashPassword = await bcrypt.hash(user.password, 10);
+    ;
     const newUser = await this.usersService.create({
       name: user.name,
       email: user.email,
-      password: hashPassword
+      password: user.password
     });
     return this.login(newUser)
 
