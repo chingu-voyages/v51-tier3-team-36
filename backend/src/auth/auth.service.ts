@@ -12,7 +12,7 @@ export class AuthService {
   constructor(private usersService: UsersService, private jwtService: JwtService) {}
 
   async validateUser(email: string, password: string): Promise<UserDocument | null> {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(email, true);
     if (!user) {
       throw new NotFoundException('User not found');
     }
