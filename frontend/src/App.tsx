@@ -1,12 +1,12 @@
 import { HashRouter, Route, Routes } from 'react-router-dom'
-import Temp from './components/Temp.component'
+import Landing from './pages/Landing.page'
 
 function App() {
   return (
     <div className="bg-background flex flex-col">
       <HashRouter>
         <Routes>
-          <Route path="" element={<Temp />}></Route>
+          <Route path="" element={<Landing />}></Route>
         </Routes>
       </HashRouter>
     </div>
