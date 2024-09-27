@@ -45,7 +45,7 @@ export class AuthService {
   }
 
   // Google OAuth registration
-  async validateGoogleUser(googleUser: GoogleUserDto): Promise<{ access_token: string }> {
+  async validateGoogleUser(googleUser: GoogleUserDto): Promise<UserDocument> {
     let user = await this.usersService.findByGoogleId(googleUser.googleId);
 
     if (!user) {
@@ -62,10 +62,7 @@ export class AuthService {
       }
     }
 
-    const payload: JwtPayload = { email: user.email, sub: user._id.toString() };
-    const access_token = this.jwtService.sign(payload);
-
-    return { access_token };
+    return user 
   }
 
   async login(user: UserDocument): Promise<{ access_token: string }> {
