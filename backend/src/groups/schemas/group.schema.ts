@@ -5,6 +5,9 @@ export type GroupDocument = HydratedDocument<Group> & {};
 
 @Schema()
 export class Group {
+  @Prop()
+  createdBy: Types.ObjectId;
+
   @Prop({ required: true })
   name: string;
 
