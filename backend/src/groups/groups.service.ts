@@ -1,26 +1,64 @@
-import { Injectable } from '@nestjs/common';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Group, GroupDocument } from './schemas/group.schema';
+import { nanoid } from 'nanoid';
 
 @Injectable()
-export class GroupsService {
-  create(createGroupDto: CreateGroupDto) {
-    return 'This action adds a new group';
+export class GroupService {
+  constructor(
+    @InjectModel(Group.name) private groupModel: Model<GroupDocument>,
+  ) {}
+
+  async createGroup(
+    name: string,
+    budget: number,
+    description?: string,
+  ): Promise<Group> {
+    const inviteCode = nanoid(8);
+    const newGroup = new this.groupModel({
+      name,
+      budget,
+      description,
+      inviteCode,
+      participants: [],
+      expenses: [],
+    });
+    return newGroup.save();
   }
 
-  findAll() {
-    return `This action returns all groups`;
+  async getAllGroups(): Promise<Group[]> {
+    return this.groupModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} group`;
+  async getGroupById(groupId: string): Promise<Group> {
+    const group = await this.groupModel.findById(groupId).exec();
+    if (!group) {
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
+    }
+    return group;
   }
 
-  update(id: number, updateGroupDto: UpdateGroupDto) {
-    return `This action updates a #${id} group`;
+  async updateGroup(
+    groupId: string,
+    updateData: Partial<Group>,
+  ): Promise<Group> {
+    const updatedGroup = await this.groupModel
+      .findByIdAndUpdate(groupId, updateData, {
+        new: true,
+        runValidators: true,
+      })
+      .exec();
+    if (!updatedGroup) {
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
+    }
+    return updatedGroup;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} group`;
+  async deleteGroup(groupId: string): Promise<void> {
+    const result = await this.groupModel.findByIdAndDelete(groupId).exec();
+    if (!result) {
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
+    }
   }
 }
