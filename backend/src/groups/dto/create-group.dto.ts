@@ -9,6 +9,13 @@ import {
 
 export class CreateGroupDto {
   @ApiProperty({
+    description: 'User ID of the user that created the group',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
     description: 'Name of the group',
     example: 'Weekend Trip',
   })

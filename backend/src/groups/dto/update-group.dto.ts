@@ -1,7 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class UpdateGroupDto {
+  @ApiProperty({
+    description: 'Group ID of the group being updated',
+  })
+  @IsString()
+  @IsNotEmpty()
+  groupId: string;
+
   @ApiProperty({
     description: 'Name of the group',
     example: 'Weekend Trip',
