@@ -1,41 +1,38 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
 
-export type UserDocument = HydratedDocument<User> & {
-  
-};
+export type UserDocument = HydratedDocument<User> & {};
 
 @Schema()
 export class User {
-  @Prop({required: true})
+  @Prop({ required: true })
   name: string;
 
-  @Prop({required: true, unique: true})
+  @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop({select: false}) //
+  @Prop({ select: false }) //
   password?: string;
 
-  @Prop({select: false})
+  @Prop({ select: false })
   googleId?: string;
 
   // association
-  @Prop({default: []})
+  @Prop({ default: [] })
   friends: Types.ObjectId[];
 
-  @Prop({default: []})
+  @Prop({ default: [], type: [{ type: Types.ObjectId, ref: 'Group' }] })
   groups: Types.ObjectId[];
 
-  @Prop({default: []})
+  @Prop({ default: [] })
   expenses: Types.ObjectId[];
 
-  @Prop({default: []})
+  @Prop({ default: [] })
   receipts: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
 
 UserSchema.pre<UserDocument>('save', async function (next) {
   if (this.password && this.isModified('password')) {
@@ -43,18 +40,16 @@ UserSchema.pre<UserDocument>('save', async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
   }
   next();
-
-  
-
-})
+});
 
 // exclude sensitive fields from responses at database level
 UserSchema.set('toJSON', {
   transform: (doc, ret, options) => {
-    ret.id = ret._id.toString(); 
+    ret.id = ret._id.toString();
     delete ret._id;
     delete ret.password;
     delete ret.googleId;
     delete ret.__v;
     return ret;
-  }, })
+  },
+});
