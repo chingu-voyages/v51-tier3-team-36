@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Group, GroupDocument } from './schemas/group.schema';
+import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 import { nanoid } from 'nanoid';
 
 @Injectable()
@@ -11,19 +13,19 @@ export class GroupService {
   ) {}
 
   async createGroup(
-    name: string,
-    budget: number,
-    description?: string,
+    createGroupDto: CreateGroupDto,
+    userId: Types.ObjectId,
   ): Promise<Group> {
     const inviteCode = nanoid(8);
+
     const newGroup = new this.groupModel({
-      name,
-      budget,
-      description,
+      ...createGroupDto,
+      createdBy: userId,
       inviteCode,
-      participants: [],
+      participants: [{ userId, contributionWeight: 0 }],
       expenses: [],
     });
+
     return newGroup.save();
   }
 
@@ -41,10 +43,10 @@ export class GroupService {
 
   async updateGroup(
     groupId: string,
-    updateData: Partial<Group>,
+    updateGroupDto: UpdateGroupDto,
   ): Promise<Group> {
     const updatedGroup = await this.groupModel
-      .findByIdAndUpdate(groupId, updateData, {
+      .findByIdAndUpdate(groupId, updateGroupDto, {
         new: true,
         runValidators: true,
       })
