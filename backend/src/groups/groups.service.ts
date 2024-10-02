@@ -25,8 +25,10 @@ export class GroupService {
     const inviteCode = nanoid(8);
 
     const newGroup = new this.groupModel({
-      ...createGroupDto,
       createdBy: createGroupDto.userId,
+      name: createGroupDto.name,
+      description: createGroupDto.description || '',
+      budget: createGroupDto.budget || 0,
       inviteCode,
       participants: [{ userId: createGroupDto.userId, contributionWeight: 0 }],
       expenses: [],
@@ -59,17 +61,18 @@ export class GroupService {
     return group;
   }
 
-  async updateGroup(updateGroupDto: UpdateGroupDto): Promise<Group> {
+  async updateGroup(
+    updateGroupDto: UpdateGroupDto,
+    groupId: string,
+  ): Promise<Group> {
     const updatedGroup = await this.groupModel
-      .findByIdAndUpdate(updateGroupDto.groupId, updateGroupDto, {
+      .findByIdAndUpdate(groupId, updateGroupDto, {
         new: true,
         runValidators: true,
       })
       .exec();
     if (!updatedGroup) {
-      throw new NotFoundException(
-        `Group with id: ${updateGroupDto.groupId} not found`,
-      );
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
     }
     return updatedGroup;
   }
