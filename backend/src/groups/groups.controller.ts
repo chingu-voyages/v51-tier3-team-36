@@ -44,9 +44,12 @@ export class GroupController {
   }
 
   // Update a group
-  @Put()
-  async updateGroup(@Body() updateGroupDto: UpdateGroupDto): Promise<Group> {
-    return this.groupService.updateGroup(updateGroupDto);
+  @Put(':groupId')
+  async updateGroup(
+    @Body() updateGroupDto: UpdateGroupDto,
+    @Param('groupId') groupId: string,
+  ): Promise<Group> {
+    return this.groupService.updateGroup(updateGroupDto, groupId);
   }
 
   // Delete a group
