@@ -5,23 +5,38 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { nanoid } from 'nanoid';
 import { Group, GroupDocument } from './schemas/group.schema';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AddParticipantDto } from './dto/add-participant.dto';
 import { RemoveParticipantDto } from './dto/remove-participant.dto';
 import { UpdateParticipantWeightDto } from './dto/update-participant-weight.dto';
-import { nanoid } from 'nanoid';
-import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { User, UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
-export class GroupService {
+export class GroupsService {
   constructor(
     @InjectModel(Group.name) private groupModel: Model<GroupDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
+  // Helper function to validate ObjectIds
+  private validateObjectId(id: string, entity: string): void {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid ${entity} ID`);
+    }
+  }
+
   async createGroup(createGroupDto: CreateGroupDto): Promise<Group> {
+    this.validateObjectId(createGroupDto.userId, 'User');
+    const user = await this.userModel.findById(createGroupDto.userId);
+    if (!user) {
+      throw new NotFoundException(
+        `User with id: ${createGroupDto.userId} not found`,
+      );
+    }
+
     const inviteCode = nanoid(8);
 
     const newGroup = new this.groupModel({
@@ -34,7 +49,12 @@ export class GroupService {
       expenses: [],
     });
 
-    return newGroup.save();
+    const savedGroup = await newGroup.save();
+
+    user.groups.push(savedGroup._id);
+    await user.save();
+
+    return savedGroup;
   }
 
   async getAllGroups(): Promise<Group[]> {
@@ -42,9 +62,10 @@ export class GroupService {
   }
 
   async getAllGroupsForUser(userId: string): Promise<Group[]> {
+    this.validateObjectId(userId, 'User');
     const user = await this.userModel
       .findById(userId)
-      .populate('groups')
+      .populate({ path: 'groups', model: 'Group' })
       .exec();
     if (!user) {
       throw new NotFoundException(`User with id: ${userId} not found`);
@@ -54,6 +75,7 @@ export class GroupService {
   }
 
   async getGroupById(groupId: string): Promise<Group> {
+    this.validateObjectId(groupId, 'Group');
     const group = await this.groupModel.findById(groupId).exec();
     if (!group) {
       throw new NotFoundException(`Group with id: ${groupId} not found`);
@@ -65,6 +87,7 @@ export class GroupService {
     updateGroupDto: UpdateGroupDto,
     groupId: string,
   ): Promise<Group> {
+    this.validateObjectId(groupId, 'Group');
     const updatedGroup = await this.groupModel
       .findByIdAndUpdate(groupId, updateGroupDto, {
         new: true,
@@ -78,6 +101,7 @@ export class GroupService {
   }
 
   async deleteGroup(groupId: string): Promise<{ message: string }> {
+    this.validateObjectId(groupId, 'Group');
     const group = await this.groupModel.findById(groupId).exec();
     if (!group) {
       throw new NotFoundException(`Group with id: ${groupId} not found`);
@@ -99,16 +123,28 @@ export class GroupService {
   }
 
   async addParticipant(addParticipantDto: AddParticipantDto): Promise<Group> {
+    this.validateObjectId(addParticipantDto.userId, 'User');
     const user = await this.userModel.findById(addParticipantDto.userId);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user)
+      throw new NotFoundException(
+        `User with id: ${addParticipantDto.userId} not found`,
+      );
 
-    const group = await this.groupModel.findOne({
-      $or: [
-        { _id: addParticipantDto.groupIdOrInviteCode },
-        { inviteCode: addParticipantDto.groupIdOrInviteCode },
-      ],
-    });
-    if (!group) throw new NotFoundException('Group not found');
+    let group;
+    if (Types.ObjectId.isValid(addParticipantDto.groupIdOrInviteCode)) {
+      group = await this.groupModel.findById(
+        addParticipantDto.groupIdOrInviteCode,
+      );
+    } else {
+      group = await this.groupModel.findOne({
+        inviteCode: addParticipantDto.groupIdOrInviteCode,
+      });
+    }
+
+    if (!group)
+      throw new NotFoundException(
+        `Group with id/code: ${addParticipantDto.groupIdOrInviteCode} not found`,
+      );
 
     const isAlreadyParticipant = group.participants.some((participant) =>
       participant.userId.equals(addParticipantDto.userId),
@@ -136,8 +172,14 @@ export class GroupService {
   async removeParticipant(
     removeParticipantDto: RemoveParticipantDto,
   ): Promise<Group> {
+    this.validateObjectId(removeParticipantDto.groupId, 'Group');
+    this.validateObjectId(removeParticipantDto.userId, 'User');
+
     const group = await this.groupModel.findById(removeParticipantDto.groupId);
-    if (!group) throw new NotFoundException('Group not found');
+    if (!group)
+      throw new NotFoundException(
+        `Group with id: ${removeParticipantDto.groupId} not found`,
+      );
 
     group.participants = group.participants.filter(
       (participant) => !participant.userId.equals(removeParticipantDto.userId),
@@ -153,18 +195,23 @@ export class GroupService {
   }
 
   async updateParticipantWeight(
+    groupId: string,
     updateParticipantWeightDto: UpdateParticipantWeightDto,
   ): Promise<Group> {
-    const group = await this.groupModel.findById(
-      updateParticipantWeightDto.groupId,
-    );
-    if (!group) throw new NotFoundException('Group not found');
+    this.validateObjectId(groupId, 'Group');
+    this.validateObjectId(updateParticipantWeightDto.userId, 'User');
+
+    const group = await this.groupModel.findById(groupId);
+    if (!group)
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
 
     const participant = group.participants.find((participant) =>
       participant.userId.equals(updateParticipantWeightDto.userId),
     );
     if (!participant)
-      throw new NotFoundException('Participant not found in this group');
+      throw new NotFoundException(
+        `Participant with id: ${updateParticipantWeightDto.userId} not found in this group`,
+      );
 
     participant.contributionWeight =
       updateParticipantWeightDto.contributionWeight;
