@@ -2,12 +2,12 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Param,
   Body,
 } from '@nestjs/common';
-import { GroupService } from './groups.service';
+import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AddParticipantDto } from './dto/add-participant.dto';
@@ -16,8 +16,8 @@ import { UpdateParticipantWeightDto } from './dto/update-participant-weight.dto'
 import { Group } from './schemas/group.schema';
 
 @Controller('groups')
-export class GroupController {
-  constructor(private readonly groupService: GroupService) {}
+export class GroupsController {
+  constructor(private readonly groupService: GroupsService) {}
 
   // Create a new group
   @Post()
@@ -44,7 +44,7 @@ export class GroupController {
   }
 
   // Update a group
-  @Put(':groupId')
+  @Patch(':groupId')
   async updateGroup(
     @Body() updateGroupDto: UpdateGroupDto,
     @Param('groupId') groupId: string,
@@ -77,11 +77,13 @@ export class GroupController {
   }
 
   // Update a participant's contribution weight in a group
-  @Put('update-weight')
+  @Patch('update-weight/:groupId')
   async updateParticipantWeight(
+    @Param('groupId') groupId: string,
     @Body() updateParticipantWeightDto: UpdateParticipantWeightDto,
   ): Promise<Group> {
     return this.groupService.updateParticipantWeight(
+      groupId,
       updateParticipantWeightDto,
     );
   }

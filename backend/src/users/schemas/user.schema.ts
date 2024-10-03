@@ -12,23 +12,23 @@ export class User {
   @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop({ select: false }) //
+  @Prop({ select: false })
   password?: string;
 
   @Prop({ select: false })
   googleId?: string;
 
   // association
-  @Prop({ default: [] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   friends: Types.ObjectId[];
 
-  @Prop({ default: [], type: [{ type: Types.ObjectId, ref: 'Group' }] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Group' }], default: [] })
   groups: Types.ObjectId[];
 
-  @Prop({ default: [] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Expense' }], default: [] })
   expenses: Types.ObjectId[];
 
-  @Prop({ default: [] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Receipt' }], default: [] })
   receipts: Types.ObjectId[];
 }
 
@@ -44,7 +44,7 @@ UserSchema.pre<UserDocument>('save', async function (next) {
 
 // exclude sensitive fields from responses at database level
 UserSchema.set('toJSON', {
-  transform: (doc, ret, options) => {
+  transform: (doc, ret) => {
     ret.id = ret._id.toString();
     delete ret._id;
     delete ret.password;

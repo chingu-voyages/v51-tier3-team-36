@@ -3,6 +3,14 @@ import { Types, HydratedDocument } from 'mongoose';
 
 export type GroupDocument = HydratedDocument<Group> & {};
 
+class Participant {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
+
+  @Prop({ default: 0 })
+  contributionWeight: number;
+}
+
 @Schema()
 export class Group {
   @Prop()
@@ -23,13 +31,14 @@ export class Group {
   @Prop({
     type: [
       {
-        userId: { type: Types.ObjectId, ref: 'User', required: true },
-        contributionWeight: { type: Number, default: 0 }, // default 0 for equal contribution
+        _id: false,
+        userId: { type: Types.ObjectId, ref: 'User' },
+        contributionWeight: Number,
       },
     ],
     default: [],
   })
-  participants: { userId: Types.ObjectId; contributionWeight: number }[];
+  participants: Participant[];
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Expense' }], default: [] })
   expenses: Types.ObjectId[];
