@@ -1,34 +1,90 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+} from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
+import { AddParticipantDto } from './dto/add-participant.dto';
+import { RemoveParticipantDto } from './dto/remove-participant.dto';
+import { UpdateParticipantWeightDto } from './dto/update-participant-weight.dto';
+import { Group } from './schemas/group.schema';
 
 @Controller('groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupService: GroupsService) {}
 
+  // Create a new group
   @Post()
-  create(@Body() createGroupDto: CreateGroupDto) {
-    return this.groupsService.create(createGroupDto);
+  async createGroup(@Body() createGroupDto: CreateGroupDto): Promise<Group> {
+    return this.groupService.createGroup(createGroupDto);
   }
 
+  // Get all groups
   @Get()
-  findAll() {
-    return this.groupsService.findAll();
+  async getAllGroups(): Promise<Group[]> {
+    return this.groupService.getAllGroups();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.groupsService.findOne(+id);
+  // Get all groups for a specific user
+  @Get('/user/:userId')
+  async getAllGroupsForUser(@Param('userId') userId: string): Promise<Group[]> {
+    return this.groupService.getAllGroupsForUser(userId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGroupDto: UpdateGroupDto) {
-    return this.groupsService.update(+id, updateGroupDto);
+  // Get a specific group by ID
+  @Get(':groupId')
+  async getGroupById(@Param('groupId') groupId: string): Promise<Group> {
+    return this.groupService.getGroupById(groupId);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.groupsService.remove(+id);
+  // Update a group
+  @Patch(':groupId')
+  async updateGroup(
+    @Body() updateGroupDto: UpdateGroupDto,
+    @Param('groupId') groupId: string,
+  ): Promise<Group> {
+    return this.groupService.updateGroup(updateGroupDto, groupId);
+  }
+
+  // Delete a group
+  @Delete(':groupId')
+  async deleteGroup(
+    @Param('groupId') groupId: string,
+  ): Promise<{ message: string }> {
+    return this.groupService.deleteGroup(groupId);
+  }
+
+  // Add a participant to a group
+  @Post('add-participant')
+  async addParticipant(
+    @Body() addParticipantDto: AddParticipantDto,
+  ): Promise<Group> {
+    return this.groupService.addParticipant(addParticipantDto);
+  }
+
+  // Remove a participant from a group
+  @Post('remove-participant')
+  async removeParticipant(
+    @Body() removeParticipantDto: RemoveParticipantDto,
+  ): Promise<Group> {
+    return this.groupService.removeParticipant(removeParticipantDto);
+  }
+
+  // Update a participant's contribution weight in a group
+  @Patch('update-weight/:groupId')
+  async updateParticipantWeight(
+    @Param('groupId') groupId: string,
+    @Body() updateParticipantWeightDto: UpdateParticipantWeightDto,
+  ): Promise<Group> {
+    return this.groupService.updateParticipantWeight(
+      groupId,
+      updateParticipantWeightDto,
+    );
   }
 }
