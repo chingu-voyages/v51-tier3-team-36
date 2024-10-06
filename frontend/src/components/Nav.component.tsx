@@ -6,6 +6,7 @@ import {
   Link,
   Button
 } from '@nextui-org/react'
+import { Link as RouterLink } from 'react-router-dom'
 
 export default function Nav() {
   return (
@@ -32,12 +33,14 @@ export default function Nav() {
       </NavbarContent>
       <NavbarContent justify="end">
         <NavbarItem className="hidden lg:flex">
-          <Link href="#">Login</Link>
+          <RouterLink to={'login'}>Login</RouterLink>
         </NavbarItem>
         <NavbarItem>
-          <Button as={Link} color="primary" href="#" variant="flat">
-            Sign Up
-          </Button>
+          <RouterLink to={'signup'}>
+            <Button as={Link} color="primary" variant="flat">
+              SignUp
+            </Button>
+          </RouterLink>
         </NavbarItem>
       </NavbarContent>
     </Navbar>

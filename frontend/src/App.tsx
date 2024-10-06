@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import Landing from './pages/Landing.page'
 import Login from './pages/Login.page'
 import SignUp from './pages/SignUp.page'
+import Home from './pages/Home.page'
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
           <Route path="" element={<Landing />}></Route>
           <Route path="login" element={<Login />}></Route>
           <Route path="signup" element={<SignUp />}></Route>
+          <Route path="home" element={<Home />}></Route>
         </Routes>
       </HashRouter>
     </div>

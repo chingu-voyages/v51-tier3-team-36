@@ -1,4 +1,5 @@
 import { Link, Button } from '@nextui-org/react'
+import { Link as RouterLink } from 'react-router-dom'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import Nav from '../components/Nav.component'
 
@@ -6,7 +7,7 @@ export default function Landing() {
   return (
     <>
       <Nav />
-      <section className="min-h-screen flex items-center flex-col">
+      <section className="min-h-screen flex items-center flex-col ">
         <DotLottieReact
           src="https://lottie.host/d7773ab6-81b6-46e9-b9c8-eeace7f1ccc9/63osHNRVs3.lottie"
           autoplay
@@ -48,7 +49,7 @@ export default function Landing() {
           href="#"
           variant="flat"
         >
-          Get Started Now
+          <RouterLink to={'signup'}>Get Started Now</RouterLink>
         </Button>
         <DotLottieReact
           src="https://mocki.io/v1/a844b371-8a31-4f58-bc3a-1dbded179ef4"
