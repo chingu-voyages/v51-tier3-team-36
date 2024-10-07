@@ -1,13 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsString } from 'class-validator';
 
 export class RemoveParticipantDto {
   @ApiProperty({
     description: 'User ID of the participant to remove from the group',
-    example: '66f1ae4732de067c7ba5a873',
+    example: ['66f1ae4732de067c7ba5a873', '66f1ae4732de067c7ba5a874'],
   })
-  @IsString()
-  userId: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  participantIds: string[];
 
   @ApiProperty({
     description: 'Group ID of the group to remove the participant from',

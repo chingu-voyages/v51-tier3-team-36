@@ -7,7 +7,7 @@ export class UpdateParticipantWeightDto {
     example: '66fda1d3b7d6cad62891f0f9',
   })
   @IsString()
-  userId: string;
+  participantId: string;
 
   @ApiProperty({
     description:
