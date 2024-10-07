@@ -1,7 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose'
 import { Model } from 'mongoose';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {User, UserDocument} from './schemas/user.schema';
 
@@ -9,9 +8,16 @@ import {User, UserDocument} from './schemas/user.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
+  async create(createUserDto: Partial<UserDocument>): Promise<UserDocument> {
+    try {
+      const createdUser = new this.userModel(createUserDto);
+      return await createdUser.save();
+    } catch (error) {
+      if (error.code === 11000 && error.keyValue.email) {
+        throw new ConflictException('Email already in use');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<UserDocument[]> {
@@ -63,25 +69,6 @@ export class UsersService {
     return query.exec();
   }
 
-  async createUserGoogle(googleUser: Partial<UserDocument>): Promise<UserDocument> {
-    try {
-      const createUser = new this.userModel({
-        name: googleUser.name,
-        email: googleUser.email,
-        googleId: googleUser.googleId
-      })
-
-      return await createUser.save()
-    } catch (error) {
-      if (error.code === 11000 && error.keyValue.email) {
-
-        throw new ConflictException('Email already in use')
-      }
-      throw error;
-    }
-    
-    
-  }
 
 }
 
