@@ -7,15 +7,17 @@ import { UserDocument } from 'src/users/schemas/user.schema';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request, Response } from 'express';
 import { LoginDto } from './dto/login-auth.dto';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({summary: 'Register a user'})
+  @ApiResponse({ status: 201, description: 'User registered successfully.' })
+  @ApiResponse({ status: 409, description: 'Email already exists.' })
   async register(@Body() user: RegisterDto) {
     return this.authService.validateUserRegistration(user);
   }
@@ -24,6 +26,8 @@ export class AuthController {
   @Post('login')
   @ApiOperation({summary: 'Login a user'})
   @ApiBody({type: LoginDto})
+  @ApiResponse({ status: 200, description: 'User logged in successfully.' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   async login(@Body() loginDto: LoginDto, @Req() req: Request) {
     return this.authService.login(req.user as UserDocument);
   }
