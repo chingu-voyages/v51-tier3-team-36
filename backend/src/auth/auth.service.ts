@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './interfaces/jwt-payload.interfaces';
 import { RegisterDto } from './dto/create-auth.dto';
 import { GoogleUserDto } from './dto/google-auth.dto';
+import { LoginDto } from './dto/login-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +41,7 @@ export class AuthService {
       email: user.email,
       password: user.password
     });
+    
     return this.login(newUser)
 
   }
@@ -65,10 +67,19 @@ export class AuthService {
     return user 
   }
 
-  async login(user: UserDocument): Promise<{ access_token: string }> {
+  async login(user: UserDocument): Promise<{ access_token: string; user: any }> {
     const payload: JwtPayload = { email: user.email, sub: user._id.toString() };
+    const token = this.jwtService.sign(payload)
+
+    const userData = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+    }
+
     return {
-      access_token: this.jwtService.sign(payload)
+      access_token: token,
+      user: userData,
     };
   }
 }
