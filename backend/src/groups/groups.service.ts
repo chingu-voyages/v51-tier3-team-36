@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -28,24 +29,24 @@ export class GroupsService {
     }
   }
 
-  async createGroup(createGroupDto: CreateGroupDto): Promise<Group> {
-    this.validateObjectId(createGroupDto.userId, 'User');
-    const user = await this.userModel.findById(createGroupDto.userId);
+  async createGroup(
+    userId: Types.ObjectId,
+    createGroupDto: CreateGroupDto,
+  ): Promise<Group> {
+    const user = await this.userModel.findById(userId);
     if (!user) {
-      throw new NotFoundException(
-        `User with id: ${createGroupDto.userId} not found`,
-      );
+      throw new NotFoundException(`User with id: ${userId} not found`);
     }
 
     const inviteCode = nanoid(8);
 
     const newGroup = new this.groupModel({
-      createdBy: createGroupDto.userId,
+      createdBy: userId,
       name: createGroupDto.name,
       description: createGroupDto.description || '',
       budget: createGroupDto.budget || 0,
       inviteCode,
-      participants: [{ userId: createGroupDto.userId, contributionWeight: 0 }],
+      participants: [{ userId: userId, contributionWeight: 0 }],
       expenses: [],
     });
 
@@ -61,14 +62,13 @@ export class GroupsService {
     return this.groupModel.find().exec();
   }
 
-  async getAllGroupsForUser(userId: string): Promise<Group[]> {
-    this.validateObjectId(userId, 'User');
+  async getAllGroupsForUser(userId: Types.ObjectId): Promise<Group[]> {
     const user = await this.userModel
       .findById(userId)
       .populate({ path: 'groups', model: 'Group' })
       .exec();
     if (!user) {
-      throw new NotFoundException(`User with id: ${userId} not found`);
+      throw new NotFoundException(`User with id: ${String(userId)} not found`);
     }
 
     return user.groups as unknown as Group[];
@@ -84,10 +84,26 @@ export class GroupsService {
   }
 
   async updateGroup(
+    userId: Types.ObjectId,
     updateGroupDto: UpdateGroupDto,
     groupId: string,
   ): Promise<Group> {
     this.validateObjectId(groupId, 'Group');
+
+    const group = await this.groupModel.findById(groupId).exec();
+    if (!group) {
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
+    }
+
+    const isParticipant = group.participants.some((participant) =>
+      participant.userId.equals(userId),
+    );
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'You are not authorized to update this group',
+      );
+    }
+
     const updatedGroup = await this.groupModel
       .findByIdAndUpdate(groupId, updateGroupDto, {
         new: true,
@@ -97,10 +113,14 @@ export class GroupsService {
     if (!updatedGroup) {
       throw new NotFoundException(`Group with id: ${groupId} not found`);
     }
+
     return updatedGroup;
   }
 
-  async deleteGroup(groupId: string): Promise<{ message: string }> {
+  async deleteGroup(
+    userId: Types.ObjectId,
+    groupId: string,
+  ): Promise<{ message: string }> {
     this.validateObjectId(groupId, 'Group');
     const group = await this.groupModel.findById(groupId).exec();
     if (!group) {
@@ -110,6 +130,14 @@ export class GroupsService {
     const participants = group.participants.map(
       (participant) => participant.userId,
     );
+    const isParticipant = participants.some((participantId) =>
+      participantId.equals(userId),
+    );
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'You are not authorized to delete this group',
+      );
+    }
     await this.userModel.updateMany(
       { _id: { $in: participants } },
       { $pull: { groups: new Types.ObjectId(groupId) } },
@@ -122,13 +150,16 @@ export class GroupsService {
     };
   }
 
-  async addParticipant(addParticipantDto: AddParticipantDto): Promise<Group> {
-    this.validateObjectId(addParticipantDto.userId, 'User');
-    const user = await this.userModel.findById(addParticipantDto.userId);
-    if (!user)
-      throw new NotFoundException(
-        `User with id: ${addParticipantDto.userId} not found`,
-      );
+  async addParticipant(
+    userId: Types.ObjectId,
+    addParticipantDto: AddParticipantDto,
+  ): Promise<Group> {
+    for (const participantId of addParticipantDto.participantIds) {
+      this.validateObjectId(participantId, 'User');
+      const user = await this.userModel.findById(participantId);
+      if (!user)
+        throw new NotFoundException(`User with id: ${participantId} not found`);
+    }
 
     let group;
     if (Types.ObjectId.isValid(addParticipantDto.groupIdOrInviteCode)) {
@@ -146,34 +177,50 @@ export class GroupsService {
         `Group with id/code: ${addParticipantDto.groupIdOrInviteCode} not found`,
       );
 
-    const isAlreadyParticipant = group.participants.some((participant) =>
-      participant.userId.equals(addParticipantDto.userId),
+    const isParticipant = group.participants.some((participant) =>
+      participant.userId.equals(userId),
     );
-    if (isAlreadyParticipant)
-      throw new BadRequestException(
-        'User is already a participant in this group',
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'You are not authorized to add participants to this group',
       );
-
-    group.participants.push({
-      userId: new Types.ObjectId(addParticipantDto.userId),
-      contributionWeight: 0,
-    });
-    await group.save();
-
-    const isGroupInUser = user.groups.some((g) => g.equals(group._id));
-    if (!isGroupInUser) {
-      user.groups.push(group._id);
-      await user.save();
     }
 
+    for (const participantId of addParticipantDto.participantIds) {
+      const user = await this.userModel.findById(participantId);
+
+      const isAlreadyParticipant = group.participants.some((participant) =>
+        participant.userId.equals(participantId),
+      );
+      if (isAlreadyParticipant) continue;
+
+      group.participants.push({
+        userId: new Types.ObjectId(participantId),
+        contributionWeight: 0,
+      });
+
+      const isGroupInUser = user.groups.some((g) => g.equals(group._id));
+      if (!isGroupInUser) {
+        user.groups.push(group._id);
+        await user.save();
+      }
+    }
+
+    await group.save();
     return group;
   }
 
   async removeParticipant(
+    userId: Types.ObjectId,
     removeParticipantDto: RemoveParticipantDto,
   ): Promise<Group> {
     this.validateObjectId(removeParticipantDto.groupId, 'Group');
-    this.validateObjectId(removeParticipantDto.userId, 'User');
+    for (const participantId of removeParticipantDto.participantIds) {
+      this.validateObjectId(participantId, 'User');
+      const user = await this.userModel.findById(participantId);
+      if (!user)
+        throw new NotFoundException(`User with id: ${participantId} not found`);
+    }
 
     const group = await this.groupModel.findById(removeParticipantDto.groupId);
     if (!group)
@@ -181,36 +228,59 @@ export class GroupsService {
         `Group with id: ${removeParticipantDto.groupId} not found`,
       );
 
-    group.participants = group.participants.filter(
-      (participant) => !participant.userId.equals(removeParticipantDto.userId),
+    const isParticipant = group.participants.some((participant) =>
+      participant.userId.equals(userId),
     );
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'You are not authorized to remove participants from this group',
+      );
+    }
+
+    for (const participantId of removeParticipantDto.participantIds) {
+      group.participants = group.participants.filter(
+        (participant) => !participant.userId.equals(participantId),
+      );
+
+      await this.userModel.updateOne(
+        { _id: participantId },
+        {
+          $pull: { groups: new Types.ObjectId(removeParticipantDto.groupId) },
+        },
+      );
+    }
+
     await group.save();
-
-    await this.userModel.updateOne(
-      { _id: removeParticipantDto.userId },
-      { $pull: { groups: new Types.ObjectId(removeParticipantDto.groupId) } },
-    );
-
     return group;
   }
 
   async updateParticipantWeight(
+    userId: Types.ObjectId,
     groupId: string,
     updateParticipantWeightDto: UpdateParticipantWeightDto,
   ): Promise<Group> {
     this.validateObjectId(groupId, 'Group');
-    this.validateObjectId(updateParticipantWeightDto.userId, 'User');
+    this.validateObjectId(updateParticipantWeightDto.participantId, 'User');
 
     const group = await this.groupModel.findById(groupId);
     if (!group)
       throw new NotFoundException(`Group with id: ${groupId} not found`);
 
+    const isParticipant = group.participants.some((participant) =>
+      participant.userId.equals(userId),
+    );
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'You are not authorized to update contribution weights for this group',
+      );
+    }
+
     const participant = group.participants.find((participant) =>
-      participant.userId.equals(updateParticipantWeightDto.userId),
+      participant.userId.equals(updateParticipantWeightDto.participantId),
     );
     if (!participant)
       throw new NotFoundException(
-        `Participant with id: ${updateParticipantWeightDto.userId} not found in this group`,
+        `Participant with id: ${updateParticipantWeightDto.participantId} not found in this group`,
       );
 
     participant.contributionWeight =
