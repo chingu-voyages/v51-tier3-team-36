@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request, Response } from 'express';
 import { LoginDto } from './dto/login-auth.dto';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthenticatedUser } from './interfaces/authenticat-user.interface';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -29,7 +30,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User logged in successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   async login(@Body() loginDto: LoginDto, @Req() req: Request) {
-    return this.authService.login(req.user as UserDocument);
+    const user = req.user as AuthenticatedUser
+    return this.authService.login(user as any);
   }
 
   @ApiOperation({summary: 'Initiate google login'})

@@ -47,7 +47,7 @@ UserSchema.pre<UserDocument>('save', async function (next) {
 UserSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
-    delete ret._id;
+    ret._id = ret._id.tostring();
     delete ret.password;
     delete ret.googleId;
     delete ret.__v;
