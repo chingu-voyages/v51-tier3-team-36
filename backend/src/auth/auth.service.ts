@@ -7,6 +7,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interfaces';
 import { RegisterDto } from './dto/create-auth.dto';
 import { GoogleUserDto } from './dto/google-auth.dto';
 import { LoginDto } from './dto/login-auth.dto';
+import { AuthenticatedUser } from './interfaces/authenticat-user.interface';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,7 @@ export class AuthService {
   }
 
   // manual registration and Google OAuth registration
-  async validateUserRegistration(user: RegisterDto): Promise<{access_token: string}> {
+  async validateUserRegistration(user: RegisterDto): Promise<{ access_token: string; user: AuthenticatedUser }> {
     const userCheck = await this.usersService.findByEmail(user.email);
 
     if (userCheck) {
@@ -47,7 +48,7 @@ export class AuthService {
   }
 
   // Google OAuth registration
-  async validateGoogleUser(googleUser: GoogleUserDto): Promise<UserDocument> {
+  async validateGoogleUser(googleUser: GoogleUserDto): Promise<{ access_token: string; user: AuthenticatedUser }> {
     let user = await this.usersService.findByGoogleId(googleUser.googleId);
 
     if (!user) {
@@ -64,15 +65,15 @@ export class AuthService {
       }
     }
 
-    return user 
+    return this.login(user )
   }
 
-  async login(user: UserDocument): Promise<{ access_token: string; user: any }> {
+  async login(user: UserDocument): Promise<{ access_token: string; user: AuthenticatedUser }> {
     const payload: JwtPayload = { email: user.email, sub: user._id.toString() };
     const token = this.jwtService.sign(payload)
 
     const userData = {
-        id: user._id.toString(),
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
     }
