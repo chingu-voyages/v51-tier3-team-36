@@ -26,7 +26,7 @@ export class AuthService {
     return null;
   }
 
-  // manual registration
+  // manual registration and Google OAuth registration
   async validateUserRegistration(user: RegisterDto): Promise<{access_token: string}> {
     const userCheck = await this.usersService.findByEmail(user.email);
 
@@ -54,7 +54,7 @@ export class AuthService {
         user.googleId = googleUser.googleId;
         await user.save();
       } else {
-        user = await this.usersService.createUserGoogle({
+        user = await this.usersService.create({
           name: googleUser.name,
           email: googleUser.email,
           googleId: googleUser.googleId
