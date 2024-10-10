@@ -6,15 +6,13 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { GroupsModule } from './groups/groups.module';
-import { ReceiptsModule } from './receipts/receipts.module';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    UsersModule, 
-    ExpensesModule, 
-    GroupsModule, 
-    ReceiptsModule, 
+    UsersModule,
+    ExpensesModule,
+    GroupsModule,
     AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,

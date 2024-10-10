@@ -24,7 +24,7 @@ export class Expense {
   amount: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Group' })
-  group: Types.ObjectId;
+  groupId: Types.ObjectId;
 
   @Prop()
   receiptUrl?: string;
