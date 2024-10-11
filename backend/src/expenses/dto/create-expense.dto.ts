@@ -12,6 +12,7 @@ export class CreateExpenseDto {
   @ApiProperty({
     description: 'Name of the expense',
     example: 'AirBnB',
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
@@ -20,6 +21,7 @@ export class CreateExpenseDto {
   @ApiProperty({
     description: 'Description of the expense',
     example: 'Weekend cottage at Lake Takama',
+    type: 'string',
     required: false,
   })
   @IsString()
@@ -29,6 +31,7 @@ export class CreateExpenseDto {
   @ApiProperty({
     description: 'Expense type/category',
     example: 'Housing',
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
@@ -37,6 +40,7 @@ export class CreateExpenseDto {
   @ApiProperty({
     description: 'Cost of the expense',
     example: 150,
+    type: 'number',
   })
   @IsNumber()
   @Min(0)
@@ -46,6 +50,7 @@ export class CreateExpenseDto {
     description: 'The percentage of the expense that the user is contributing',
     example: 50,
     default: 0,
+    type: 'number',
   })
   @IsNumber()
   @Min(0)
@@ -55,6 +60,7 @@ export class CreateExpenseDto {
   @ApiProperty({
     description: 'Id of the group the expense belongs to',
     example: '66fda1d3b7d6cad62891f0f9',
+    type: 'string (id)',
   })
   @IsString()
   @IsNotEmpty()
@@ -62,6 +68,7 @@ export class CreateExpenseDto {
 
   @ApiProperty({
     description: 'Optional receipt proof for the expense as an image file',
+    type: 'file',
     required: false,
   })
   @IsOptional()

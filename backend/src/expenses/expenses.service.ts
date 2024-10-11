@@ -96,6 +96,19 @@ export class ExpensesService {
     return user.expenses as unknown as Expense[];
   }
 
+  async getAllExpensesForGroup(groupId: string): Promise<Expense[]> {
+    validateObjectId(groupId, 'Group');
+    const group = await this.groupModel
+      .findById(groupId)
+      .populate({ path: 'expenses', model: 'Expense' })
+      .exec();
+    if (!group) {
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
+    }
+
+    return group.expenses as unknown as Expense[];
+  }
+
   async getExpenseById(expenseId: string): Promise<Expense> {
     validateObjectId(expenseId, 'Expense');
     const expense = await this.expenseModel.findById(expenseId).exec();
