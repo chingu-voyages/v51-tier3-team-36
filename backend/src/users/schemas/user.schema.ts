@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { userInfo } from 'os';
 
 
 export type UserDocument = HydratedDocument<User>;
@@ -47,7 +48,7 @@ UserSchema.pre<UserDocument>('save', async function (next) {
 UserSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
-    ret._id = ret._id.tostring();
+    ret._id = ret._id;
     delete ret.password;
     delete ret.googleId;
     delete ret.__v;
