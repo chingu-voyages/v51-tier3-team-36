@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Res, HttpStatus, BadRequestException, HttpException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/create-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -30,8 +30,25 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User logged in successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   async login(@Body() loginDto: LoginDto, @Req() req: Request) {
-    const user = req.user as AuthenticatedUser
-    return this.authService.login(user as any);
+    try {
+      const user = req.user as UserDocument;
+      return this.authService.login(user);
+    } catch (error) {
+      if (
+        error instanceof BadRequestException &&
+        error.message.includes('password')
+      ) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            error: 'Password not set. Please set a password to enable manual login.',
+            code: 'PASSWORD_NOT_SET',
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw error;
+    }
   }
 
   @ApiOperation({summary: 'Initiate google login'})
