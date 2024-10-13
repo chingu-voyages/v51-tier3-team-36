@@ -4,6 +4,8 @@ import { Model, Types } from 'mongoose';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {User, UserDocument} from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
+import { SetPasswordDto } from 'src/auth/dto/set-password.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -78,7 +80,7 @@ export class UsersService {
   }
 
   
-  async addFriend(userId: string, friendId: string): Promise<UserDocument | any> {
+  async addFriend(userId: string, friendId: string): Promise<UserDocument> {
     this.validateObjectId(userId)
     this.validateObjectId(friendId)
 
@@ -88,12 +90,15 @@ export class UsersService {
 
     // find user
     const user = await this.userModel.findById(userId).exec()
+    // find friend
+    const friend = await this.userModel.findById(friendId).exec()
+
+
     if (!user) {
       throw new NotFoundException(`User could not be found`)
     }
 
-    // find friend
-    const friend = await this.userModel.findById(friendId).exec()
+    
     if (!friend) {
       throw new NotFoundException(`Friend could not be found`)
     }
@@ -104,7 +109,7 @@ export class UsersService {
     }
 
     user.friends.push(friend._id)
-    const newFriend = friend.friends.push(user._id)
+    friend.friends.push(user._id)
 
     await user.save() 
     await friend.save()
@@ -112,15 +117,31 @@ export class UsersService {
     return user
   }
 
-  async getFriends(userId: string): Promise< string[]> {
+  async getFriends(userId: string): Promise< UserDocument[]> {
     this.validateObjectId(userId)
     
-    const user = await this.userModel.findById(userId).populate('friends', 'name').exec()
+    const user = await this.userModel.findById(userId).populate('friends', 'name email').exec()
     if (!user) {
       throw new NotFoundException('User could not be found')
     }
 
-    return user.friends.map((friend: any) => friend.name)
+    return user.friends as unknown as UserDocument[]
+  }
+
+  async setPassword(userId: string, setPasswordDto: SetPasswordDto) {
+    const user = await this.userModel.findById(userId).exec()
+    if (!user) {
+      throw new NotFoundException('User could not be found')
+    }
+
+    if (user.password) {
+      throw new BadRequestException('Password is already set.');
+    }
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(setPasswordDto.password, salt);
+    await user.save();
+
+    return user;
   }
   
 }
