@@ -1,6 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 
+export interface IExpense {
+  createdBy: string;
+  contributionWeight: number;
+  name: string;
+  decription?: string;
+  caregory: string;
+  groupId: string;
+  receiptUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  id: string;
+}
+
 export type ExpenseDocument = HydratedDocument<Expense>;
 
 @Schema({ timestamps: true })

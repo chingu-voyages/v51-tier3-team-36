@@ -5,6 +5,7 @@ import { Expense, ExpenseSchema } from './schemas/expenses.schema';
 import { Group, GroupSchema } from 'src/groups/schemas/group.schema';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { MongooseModule } from '@nestjs/mongoose';
       { name: Group.name, schema: GroupSchema },
       { name: User.name, schema: UserSchema },
     ]),
+    CloudinaryModule,
   ],
   controllers: [ExpensesController],
   providers: [ExpensesService],

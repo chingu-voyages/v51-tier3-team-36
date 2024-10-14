@@ -11,6 +11,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import validateObjectId from 'src/common/helpers/validateObjectId';
 import { Group, GroupDocument } from 'src/groups/schemas/group.schema';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ExpensesService {
@@ -21,6 +22,7 @@ export class ExpensesService {
     private groupModel: Model<GroupDocument>,
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async createExpense(
@@ -51,9 +53,12 @@ export class ExpensesService {
       );
     }
 
-    // let receiptUrl = '';
+    let receiptUrl = '';
     if (createExpenseDto.receipt) {
-      // Cloudinary image upload logic
+      const uploadedFile = await this.cloudinaryService.uploadFile(
+        createExpenseDto.receipt,
+      );
+      receiptUrl = uploadedFile.secure_url;
     }
 
     const newExpense = new this.expenseModel({
@@ -64,7 +69,7 @@ export class ExpensesService {
       amount: createExpenseDto.amount,
       contributionWeight: createExpenseDto.ContributionWeight || 0,
       groupId: createExpenseDto.groupId,
-      // receiptUrl,
+      receiptUrl,
     });
 
     const savedExpense = await newExpense.save();
@@ -139,25 +144,25 @@ export class ExpensesService {
       );
     }
 
-    // let receiptUrl = '';
+    let receiptUrl = expense.receiptUrl;
     if (receipt) {
-      // Cloudinary upload image logic
+      const uploadedFile = await this.cloudinaryService.uploadFile(receipt);
+      receiptUrl = uploadedFile.secure_url;
     }
 
     const updatedExpense = await this.expenseModel
-      .findByIdAndUpdate(expenseId, updateFields, {
-        new: true,
-        runValidators: true,
-      })
+      .findByIdAndUpdate(
+        expenseId,
+        { ...updateFields, receiptUrl },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
       .exec();
     if (!updatedExpense) {
       throw new NotFoundException(`Expense with id: ${expenseId} not found`);
     }
-
-    // if (receiptUrl) {
-    //   updatedExpense.receiptUrl = receiptUrl;
-    //   await updatedExpense.save();
-    // }
 
     return updatedExpense;
   }

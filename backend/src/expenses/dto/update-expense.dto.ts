@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsOptional, Min, Max } from 'class-validator';
 
+export interface IUpdateExpenseDto {
+  name?: string;
+  description?: string;
+  category?: string;
+  amount?: number;
+  ContributionWeight?: number;
+  receipt?: Express.Multer.File;
+}
+
 export class UpdateExpenseDto {
   @ApiProperty({
     description: 'Name of the expense',
@@ -62,5 +71,5 @@ export class UpdateExpenseDto {
     required: false,
   })
   @IsOptional()
-  receipt?: File;
+  receipt?: Express.Multer.File;
 }

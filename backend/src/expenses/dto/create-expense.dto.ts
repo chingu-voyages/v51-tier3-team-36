@@ -8,6 +8,16 @@ import {
   Max,
 } from 'class-validator';
 
+export interface ICreateExpenseDto {
+  name: string;
+  description?: string;
+  category: string;
+  amount: number;
+  contributionWeight: number;
+  groupId: string;
+  receipt?: Express.Multer.File;
+}
+
 export class CreateExpenseDto {
   @ApiProperty({
     description: 'Name of the expense',
@@ -72,5 +82,5 @@ export class CreateExpenseDto {
     required: false,
   })
   @IsOptional()
-  receipt?: File;
+  receipt?: Express.Multer.File;
 }
