@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Res, HttpStatus, BadRequestException, HttpException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/create-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -30,8 +30,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User logged in successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   async login(@Body() loginDto: LoginDto, @Req() req: Request) {
-    const user = req.user as AuthenticatedUser
-    return this.authService.login(user as any);
+    return this.authService.login(req.user as UserDocument);
   }
 
   @ApiOperation({summary: 'Initiate google login'})

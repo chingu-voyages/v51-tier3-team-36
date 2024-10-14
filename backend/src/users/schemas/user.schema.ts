@@ -3,7 +3,8 @@ import { Types, HydratedDocument } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { userInfo } from 'os';
 
-export type UserDocument = HydratedDocument<User> & {};
+
+export type UserDocument = HydratedDocument<User>;
 
 @Schema()
 export class User {

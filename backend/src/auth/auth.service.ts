@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -13,6 +13,9 @@ import { AuthenticatedUser } from './interfaces/authenticat-user.interface';
 export class AuthService {
   constructor(private usersService: UsersService, private jwtService: JwtService) {}
 
+
+
+
   async validateUser(email: string, password: string): Promise<UserDocument | null> {
     const user = await this.usersService.findByEmail(email, true);
     if (!user) {
@@ -20,8 +23,13 @@ export class AuthService {
     }
 
     
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (isMatch) {
+    if(!user.password) {
+      throw new BadRequestException("User has not set a password, Please set a password to enable login with email.")
+    }
+
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (isMatch) {
         return user;
       }
     
@@ -54,6 +62,10 @@ export class AuthService {
     if (!user) {
       user = await this.usersService.findByEmail(googleUser.email);
       if (user) {
+
+        if (user.googleId && user.googleId !== googleUser.googleId) {
+          throw new ConflictException("This Email is already linked with another account")
+        }
         user.googleId = googleUser.googleId;
         await user.save();
       } else {
