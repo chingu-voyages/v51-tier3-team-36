@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -14,6 +13,7 @@ import { AddParticipantDto } from './dto/add-participant.dto';
 import { RemoveParticipantDto } from './dto/remove-participant.dto';
 import { UpdateParticipantWeightDto } from './dto/update-participant-weight.dto';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import validateObjectId from 'src/common/helpers/validateObjectId';
 
 @Injectable()
 export class GroupsService {
@@ -21,13 +21,6 @@ export class GroupsService {
     @InjectModel(Group.name) private groupModel: Model<GroupDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
-
-  // Helper function to validate ObjectIds
-  private validateObjectId(id: string, entity: string): void {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(`Invalid ${entity} ID`);
-    }
-  }
 
   async createGroup(
     userId: Types.ObjectId,
@@ -68,14 +61,16 @@ export class GroupsService {
       .populate({ path: 'groups', model: 'Group' })
       .exec();
     if (!user) {
-      throw new NotFoundException(`User with id: ${String(userId)} not found`);
+      throw new NotFoundException(
+        `User with id: ${userId.toString()} not found`,
+      );
     }
 
     return user.groups as unknown as Group[];
   }
 
   async getGroupById(groupId: string): Promise<Group> {
-    this.validateObjectId(groupId, 'Group');
+    validateObjectId(groupId, 'Group');
     const group = await this.groupModel.findById(groupId).exec();
     if (!group) {
       throw new NotFoundException(`Group with id: ${groupId} not found`);
@@ -88,7 +83,7 @@ export class GroupsService {
     updateGroupDto: UpdateGroupDto,
     groupId: string,
   ): Promise<Group> {
-    this.validateObjectId(groupId, 'Group');
+    validateObjectId(groupId, 'Group');
 
     const group = await this.groupModel.findById(groupId).exec();
     if (!group) {
@@ -121,7 +116,7 @@ export class GroupsService {
     userId: Types.ObjectId,
     groupId: string,
   ): Promise<{ message: string }> {
-    this.validateObjectId(groupId, 'Group');
+    validateObjectId(groupId, 'Group');
     const group = await this.groupModel.findById(groupId).exec();
     if (!group) {
       throw new NotFoundException(`Group with id: ${groupId} not found`);
@@ -155,7 +150,7 @@ export class GroupsService {
     addParticipantDto: AddParticipantDto,
   ): Promise<Group> {
     for (const participantId of addParticipantDto.participantIds) {
-      this.validateObjectId(participantId, 'User');
+      validateObjectId(participantId, 'User');
       const user = await this.userModel.findById(participantId);
       if (!user)
         throw new NotFoundException(`User with id: ${participantId} not found`);
@@ -214,9 +209,9 @@ export class GroupsService {
     userId: Types.ObjectId,
     removeParticipantDto: RemoveParticipantDto,
   ): Promise<Group> {
-    this.validateObjectId(removeParticipantDto.groupId, 'Group');
+    validateObjectId(removeParticipantDto.groupId, 'Group');
     for (const participantId of removeParticipantDto.participantIds) {
-      this.validateObjectId(participantId, 'User');
+      validateObjectId(participantId, 'User');
       const user = await this.userModel.findById(participantId);
       if (!user)
         throw new NotFoundException(`User with id: ${participantId} not found`);
@@ -259,8 +254,8 @@ export class GroupsService {
     groupId: string,
     updateParticipantWeightDto: UpdateParticipantWeightDto,
   ): Promise<Group> {
-    this.validateObjectId(groupId, 'Group');
-    this.validateObjectId(updateParticipantWeightDto.participantId, 'User');
+    validateObjectId(groupId, 'Group');
+    validateObjectId(updateParticipantWeightDto.participantId, 'User');
 
     const group = await this.groupModel.findById(groupId);
     if (!group)

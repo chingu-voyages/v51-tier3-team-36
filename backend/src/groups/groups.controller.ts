@@ -50,7 +50,7 @@ export class GroupsController {
     description:
       'This route retrieves all group documents for the logged-in user.',
   })
-  @Get('/by-user')
+  @Get('/for-user')
   async getAllGroupsForUser(@Req() req): Promise<Group[]> {
     return this.groupService.getAllGroupsForUser(req.user._id);
   }

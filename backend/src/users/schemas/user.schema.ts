@@ -28,9 +28,6 @@ export class User {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Expense' }], default: [] })
   expenses: Types.ObjectId[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Receipt' }], default: [] })
-  receipts: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

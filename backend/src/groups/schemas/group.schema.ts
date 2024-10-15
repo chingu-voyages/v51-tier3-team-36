@@ -3,17 +3,17 @@ import { Types, HydratedDocument } from 'mongoose';
 
 export type GroupDocument = HydratedDocument<Group> & {};
 
-class Participant {
+export class Participant {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ default: 0 })
+  @Prop({ default: 0, min: 0, max: 100 })
   contributionWeight: number;
 }
 
 @Schema()
 export class Group {
-  @Prop()
+  @Prop({ type: Types.ObjectId, ref: 'User' })
   createdBy: Types.ObjectId;
 
   @Prop({ required: true })
