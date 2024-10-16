@@ -58,7 +58,14 @@ export class GroupsService {
   async getAllGroupsForUser(userId: Types.ObjectId): Promise<Group[]> {
     const user = await this.userModel
       .findById(userId)
-      .populate({ path: 'groups', model: 'Group' })
+      .populate({
+        path: 'groups',
+        model: 'Group',
+        populate: {
+          path: 'participants.userId',
+          model: 'User',
+        },
+      })
       .exec();
     if (!user) {
       throw new NotFoundException(
@@ -148,6 +155,7 @@ export class GroupsService {
   async addParticipant(
     userId: Types.ObjectId,
     addParticipantDto: AddParticipantDto,
+    groupIdOrInviteCode: string,
   ): Promise<Group> {
     for (const participantId of addParticipantDto.participantIds) {
       validateObjectId(participantId, 'User');
@@ -157,19 +165,17 @@ export class GroupsService {
     }
 
     let group;
-    if (Types.ObjectId.isValid(addParticipantDto.groupIdOrInviteCode)) {
-      group = await this.groupModel.findById(
-        addParticipantDto.groupIdOrInviteCode,
-      );
+    if (Types.ObjectId.isValid(groupIdOrInviteCode)) {
+      group = await this.groupModel.findById(groupIdOrInviteCode);
     } else {
       group = await this.groupModel.findOne({
-        inviteCode: addParticipantDto.groupIdOrInviteCode,
+        inviteCode: groupIdOrInviteCode,
       });
     }
 
     if (!group)
       throw new NotFoundException(
-        `Group with id/code: ${addParticipantDto.groupIdOrInviteCode} not found`,
+        `Group with id/code: ${groupIdOrInviteCode} not found`,
       );
 
     const isParticipant = group.participants.some((participant) =>
@@ -208,8 +214,9 @@ export class GroupsService {
   async removeParticipant(
     userId: Types.ObjectId,
     removeParticipantDto: RemoveParticipantDto,
+    groupId: string,
   ): Promise<Group> {
-    validateObjectId(removeParticipantDto.groupId, 'Group');
+    validateObjectId(groupId, 'Group');
     for (const participantId of removeParticipantDto.participantIds) {
       validateObjectId(participantId, 'User');
       const user = await this.userModel.findById(participantId);
@@ -217,11 +224,9 @@ export class GroupsService {
         throw new NotFoundException(`User with id: ${participantId} not found`);
     }
 
-    const group = await this.groupModel.findById(removeParticipantDto.groupId);
+    const group = await this.groupModel.findById(groupId);
     if (!group)
-      throw new NotFoundException(
-        `Group with id: ${removeParticipantDto.groupId} not found`,
-      );
+      throw new NotFoundException(`Group with id: ${groupId} not found`);
 
     const isParticipant = group.participants.some((participant) =>
       participant.userId.equals(userId),
@@ -240,7 +245,7 @@ export class GroupsService {
       await this.userModel.updateOne(
         { _id: participantId },
         {
-          $pull: { groups: new Types.ObjectId(removeParticipantDto.groupId) },
+          $pull: { groups: new Types.ObjectId(groupId) },
         },
       );
     }

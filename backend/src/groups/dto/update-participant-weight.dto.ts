@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString, Max, Min } from 'class-validator';
 
+export interface IUpdateParticipantWeightDto {
+  participantId: string;
+  contributionWeight: number;
+}
+
 export class UpdateParticipantWeightDto {
   @ApiProperty({
     description: 'User ID of the participant being updated',

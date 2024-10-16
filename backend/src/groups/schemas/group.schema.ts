@@ -1,10 +1,29 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 
+export interface IGroup {
+  createdBy: string;
+  name: string;
+  inviteCode: string;
+  description?: string;
+  budget: number;
+  participants: {
+    userId: string;
+    contributionWeight: number;
+  };
+  expenses: string[];
+  id: string;
+}
+
 export type GroupDocument = HydratedDocument<Group> & {};
 
 export class Participant {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    alias: 'participant',
+  })
   userId: Types.ObjectId;
 
   @Prop({ default: 0, min: 0, max: 100 })
