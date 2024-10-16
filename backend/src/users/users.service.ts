@@ -73,22 +73,21 @@ export class UsersService {
   }
 
   // helper function
-  private validateObjectId(id: Types.ObjectId |string): void {
-    const idToValidate = id instanceof Types.ObjectId ? id.toString() : id;
-    if (!Types.ObjectId.isValid(idToValidate)) {
+  private validateObjectId(id: string): void {
+    if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid ID`);
     }
   }
 
   
-  async addFriend(userId: Types.ObjectId, friendId: string): Promise<UserDocument> {
+  async addFriend(userId: string, friendId: string): Promise<UserDocument> {
     this.validateObjectId(userId)
     this.validateObjectId(friendId)
 
-    if (userId.toString() == friendId) {
+    if (userId == friendId) {
       throw new BadRequestException('Cant add yourself')
     }
-    
+
     // find user
     const user = await this.userModel.findById(userId).exec()
     // find friend
@@ -118,7 +117,8 @@ export class UsersService {
     return user
   }
 
-  async getFriends(userId: Types.ObjectId): Promise< UserDocument[]> {
+  async getFriends(userId: string): Promise< UserDocument[]> {
+    this.validateObjectId(userId)
     
     const user = await this.userModel.findById(userId).populate('friends', 'name email').exec()
     if (!user) {
@@ -128,7 +128,7 @@ export class UsersService {
     return user.friends as unknown as UserDocument[]
   }
 
-  async setPassword(userId: Types.ObjectId, setPasswordDto: SetPasswordDto) {
+  async setPassword(userId: string, setPasswordDto: SetPasswordDto) {
     const user = await this.userModel.findById(userId).exec()
     if (!user) {
       throw new NotFoundException('User could not be found')

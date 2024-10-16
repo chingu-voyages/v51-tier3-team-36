@@ -69,13 +69,14 @@ export class UsersController {
     return this.usersService.setPassword(user._id, setPasswordDto);
   }
 
-  @Post(':id/set-password')
+  @UseGuards(JwtAuthGuard)
+  @Post('/set-password')
   @ApiOperation({ summary: 'Set password for a user' })
   @ApiBody({ type: SetPasswordDto })
   async setPassword(
-    @Param('id') userId: string,
+    @GetUser() user,
     @Body() setPasswordDto: SetPasswordDto,
   ) {
-    return this.usersService.setPassword(userId, setPasswordDto);
+    return this.usersService.setPassword(user._id, setPasswordDto);
   }
 }
