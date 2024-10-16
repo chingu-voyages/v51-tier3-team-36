@@ -125,7 +125,7 @@ export class GroupsController {
     description: 'Successfully added participant(s) to a group',
     type: GroupResponseDto,
   })
-  @Patch(':groupIdOrInviteCode/add-participant')
+  @Patch(':groupIdOrInviteCode/add-participants')
   async addParticipant(
     @Req() req,
     @Body() addParticipantDto: AddParticipantDto,
@@ -143,7 +143,7 @@ export class GroupsController {
     description: 'Successfully removed participant(s) from a group',
     type: GroupResponseDto,
   })
-  @Patch(':groupId/remove-participant')
+  @Patch(':groupId/remove-participants')
   async removeParticipant(
     @Req() req,
     @Body() removeParticipantDto: RemoveParticipantDto,
