@@ -55,7 +55,7 @@ export class UsersService {
 
   // select function to include excluded files in schema
   async findByEmail(email: string, passwordIncluded: boolean = false): Promise<UserDocument | null> {
-    const query = this.userModel.findOne({ email });
+    const query = this.userModel.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
     if (passwordIncluded) {
       query.select('+password');
     }
@@ -73,18 +73,19 @@ export class UsersService {
   }
 
   // helper function
-  private validateObjectId(id: string): void {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(`Invalid ID`);
+  private validateObjectId(id: Types.ObjectId | string, context: string): void {
+    const idToValidate = id instanceof Types.ObjectId ? id.toString() : id;
+    if (!Types.ObjectId.isValid(idToValidate)) {
+      throw new BadRequestException(`Invalid ${context} ID: ${idToValidate}`);
     }
   }
 
   
   async addFriend(userId: string, friendId: string): Promise<UserDocument> {
-    this.validateObjectId(userId)
-    this.validateObjectId(friendId)
+    this.validateObjectId(userId, 'User')
+    this.validateObjectId(friendId, "Friend")
 
-    if (userId == friendId) {
+    if (userId.toString() == friendId) {
       throw new BadRequestException('Cant add yourself')
     }
 
@@ -105,7 +106,7 @@ export class UsersService {
 
     // check if user is already friends
     if (user.friends.includes(friend._id)) {
-      throw new ConflictException("User already friends")
+      throw new ConflictException("This person is already friend")
     }
 
     user.friends.push(friend._id)
@@ -114,11 +115,11 @@ export class UsersService {
     await user.save() 
     await friend.save()
 
-    return user
+    return this.userModel.findById(friend._id).select('name email').exec();
   }
 
   async getFriends(userId: string): Promise< UserDocument[]> {
-    this.validateObjectId(userId)
+    this.validateObjectId(userId, 'User')
     
     const user = await this.userModel.findById(userId).populate('friends', 'name email').exec()
     if (!user) {
@@ -127,6 +128,44 @@ export class UsersService {
 
     return user.friends as unknown as UserDocument[]
   }
+
+
+  async removeFriend(userId: string, friendId: string): Promise<UserDocument> {
+    this.validateObjectId(userId, 'User')
+    this.validateObjectId(friendId, "Friend")
+
+
+    if (userId.toString() == friendId) {
+      throw new BadRequestException('Cant delete yourself from friends list')
+    }
+    const friend = await this.userModel.findById(friendId).exec()
+    const user = await this.userModel.findById(userId).exec()
+
+    if (!friend) {
+      throw new NotFoundException((`User with #${friendId} could not be found`))
+    }
+
+    if (!user) {
+      throw new NotFoundException((`User with #${userId} could not be found`))
+    }
+    const friendIndex = user.friends.indexOf(friend._id);
+    if (friendIndex === -1) {
+    throw new ConflictException('This person is not your friend');
+  }
+
+    user.friends.splice(friendIndex, 1);
+    await user.save();
+
+    const userIndex = friend.friends.indexOf(user._id);
+    if (userIndex !== -1) {
+     friend.friends.splice(userIndex, 1);
+     await friend.save();
+  }
+
+    return this.userModel.findById(friend._id).select('name email').exec();
+
+   
+    }
 
   async setPassword(userId: string, setPasswordDto: SetPasswordDto) {
     const user = await this.userModel.findById(userId).exec()
@@ -143,6 +182,8 @@ export class UsersService {
 
     return user;
   }
+
+
   
 }
 

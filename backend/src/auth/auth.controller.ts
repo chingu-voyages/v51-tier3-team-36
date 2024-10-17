@@ -31,25 +31,9 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User logged in successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid credentials.' })
   async login(@Body() loginDto: LoginDto, @Req() req: Request) {
-    try {
       const user = req.user as UserDocument;
       return this.authService.login(user);
-    } catch (error) {
-      if (
-        error instanceof BadRequestException &&
-        error.message.includes('password')
-      ) {
-        throw new HttpException(
-          {
-            status: HttpStatus.BAD_REQUEST,
-            error: 'Password not set. Please set a password to enable manual login.',
-            code: 'PASSWORD_NOT_SET',
-          },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      throw error;
-    }
+    
   }
 
   @ApiOperation({summary: 'Initiate google login'})

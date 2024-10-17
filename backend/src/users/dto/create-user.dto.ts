@@ -6,11 +6,19 @@ export class CreateUserDto {
     @IsString()
     name: string;
 
-    @ApiProperty({description: 'User email'})
+    @ApiProperty({
+      description: 'User email address',
+      example: 'johndoe@example.com',
+    })
     @IsEmail()
     email: string;
 
-    @ApiProperty({description: 'User password'})
+    @ApiProperty({
+      description: 'User password (optional)',
+      minLength: 8,
+      required: false,
+      example: 'Password123!',
+    })
     @IsOptional()
     @IsString()
     @MinLength(8, { message: 'Password must be at least 8 characters long' })
@@ -20,6 +28,11 @@ export class CreateUserDto {
     })
     password?: string;
 
+    @ApiProperty({
+      description: 'User Google ID (optional)',
+      example: '106562378642658987654',
+      required: false,
+    })
     @ApiProperty({description: 'User googleId'})
     @IsOptional()
     @IsString()

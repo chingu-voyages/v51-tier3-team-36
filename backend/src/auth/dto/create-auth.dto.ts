@@ -5,7 +5,11 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 export class RegisterDto extends CreateUserDto{
 
-  @ApiProperty({description: 'User password'})
+  @ApiProperty({
+    description: 'User password',
+    minLength: 8,
+    example: 'Password123!',
+  })
   @IsString()
   @IsNotEmpty()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
