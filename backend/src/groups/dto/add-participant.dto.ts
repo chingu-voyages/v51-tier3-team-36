@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsArray, IsString } from 'class-validator';
 
+export interface IAddParticipantDto {
+  participantIds: string[];
+}
+
 export class AddParticipantDto {
   @ApiProperty({
     description: 'User ID of the participant to add to the group',
@@ -10,14 +14,5 @@ export class AddParticipantDto {
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })
-  participantIds: string[];
-
-  @ApiProperty({
-    description:
-      'Group ID or invite code of the group to add the participant to',
-    example: '66fda222a96c66f268211f92',
-    type: 'string (id)',
-  })
-  @IsString()
-  groupIdOrInviteCode: string;
+  participantIds: [string];
 }
