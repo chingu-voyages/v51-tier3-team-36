@@ -7,6 +7,12 @@ import {
   Min,
 } from 'class-validator';
 
+export interface ICreateGroupDto {
+  name: string;
+  description?: string;
+  budget: number;
+}
+
 export class CreateGroupDto {
   @ApiProperty({
     description: 'Name of the group',

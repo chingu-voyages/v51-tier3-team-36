@@ -1,14 +1,17 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose'
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {User, UserDocument} from './schemas/user.schema';
+import { CreateUserDto } from './dto/create-user.dto';
+import { SetPasswordDto } from 'src/auth/dto/set-password.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(createUserDto: Partial<UserDocument>): Promise<UserDocument> {
+  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     try {
       const createdUser = new this.userModel(createUserDto);
       return await createdUser.save();
@@ -69,7 +72,78 @@ export class UsersService {
     return query.exec();
   }
 
+  // helper function
+  private validateObjectId(id: string): void {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid ID`);
+    }
+  }
 
+  
+  async addFriend(userId: string, friendId: string): Promise<UserDocument> {
+    this.validateObjectId(userId)
+    this.validateObjectId(friendId)
+
+    if (userId == friendId) {
+      throw new BadRequestException('Cant add yourself')
+    }
+
+    // find user
+    const user = await this.userModel.findById(userId).exec()
+    // find friend
+    const friend = await this.userModel.findById(friendId).exec()
+
+
+    if (!user) {
+      throw new NotFoundException(`User could not be found`)
+    }
+
+    
+    if (!friend) {
+      throw new NotFoundException(`Friend could not be found`)
+    }
+
+    // check if user is already friends
+    if (user.friends.includes(friend._id)) {
+      throw new ConflictException("User already friends")
+    }
+
+    user.friends.push(friend._id)
+    friend.friends.push(user._id)
+
+    await user.save() 
+    await friend.save()
+
+    return user
+  }
+
+  async getFriends(userId: string): Promise< UserDocument[]> {
+    this.validateObjectId(userId)
+    
+    const user = await this.userModel.findById(userId).populate('friends', 'name email').exec()
+    if (!user) {
+      throw new NotFoundException('User could not be found')
+    }
+
+    return user.friends as unknown as UserDocument[]
+  }
+
+  async setPassword(userId: string, setPasswordDto: SetPasswordDto) {
+    const user = await this.userModel.findById(userId).exec()
+    if (!user) {
+      throw new NotFoundException('User could not be found')
+    }
+
+    if (user.password) {
+      throw new BadRequestException('Password is already set.');
+    }
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(setPasswordDto.password, salt);
+    await user.save();
+
+    return user;
+  }
+  
 }
 
 
