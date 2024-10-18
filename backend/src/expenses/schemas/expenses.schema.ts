@@ -1,28 +1,55 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 
+export interface IExpense {
+  createdBy: string;
+  contributionWeight: number;
+  name: string;
+  decription?: string;
+  caregory: string;
+  groupId: string;
+  receiptUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  id: string;
+}
+
 export type ExpenseDocument = HydratedDocument<Expense>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Expense {
-  @Prop({required: true})
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  createdBy: Types.ObjectId;
+
+  @Prop({ default: 0, min: 0, max: 100 })
+  contributionWeight: number;
+
+  @Prop({ required: true })
   name: string;
 
-  @Prop({required: true})
-  amount: number;
-
-  @Prop({required: true})
-  date: Date;
-
-  // association
-  @Prop({})
-  creator: Types.ObjectId;
+  @Prop()
+  description?: string;
 
   @Prop()
-  group: Types.ObjectId;
+  category: string;
 
-  @Prop({default: []})
-  expenses: Types.ObjectId[];
+  @Prop({ required: true })
+  amount: number;
+
+  @Prop({ type: Types.ObjectId, ref: 'Group' })
+  groupId: Types.ObjectId;
+
+  @Prop()
+  receiptUrl?: string;
 }
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);
+
+ExpenseSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
+  },
+});

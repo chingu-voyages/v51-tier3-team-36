@@ -1,8 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { userInfo } from 'os';
 
-export type UserDocument = HydratedDocument<User> & {};
+
+export type UserDocument = HydratedDocument<User>;
 
 @Schema()
 export class User {
@@ -27,9 +29,6 @@ export class User {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Expense' }], default: [] })
   expenses: Types.ObjectId[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Receipt' }], default: [] })
-  receipts: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -46,7 +45,7 @@ UserSchema.pre<UserDocument>('save', async function (next) {
 UserSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
-    delete ret._id;
+    ret._id = ret._id;
     delete ret.password;
     delete ret.googleId;
     delete ret.__v;

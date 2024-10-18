@@ -7,10 +7,17 @@ import {
   Min,
 } from 'class-validator';
 
+export interface ICreateGroupDto {
+  name: string;
+  description?: string;
+  budget: number;
+}
+
 export class CreateGroupDto {
   @ApiProperty({
     description: 'Name of the group',
     example: 'Weekend Trip',
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
@@ -19,6 +26,7 @@ export class CreateGroupDto {
   @ApiProperty({
     description: 'Description of the group',
     example: 'A weekend getaway with friends',
+    type: 'string',
     required: false,
   })
   @IsString()
@@ -28,6 +36,7 @@ export class CreateGroupDto {
   @ApiProperty({
     description: 'Initial budget for the group',
     example: 100.0,
+    type: 'number',
   })
   @IsNumber()
   @Min(0)
