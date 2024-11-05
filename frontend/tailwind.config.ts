@@ -1,7 +1,7 @@
 import { nextui } from "@nextui-org/react";
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
-module.exports = {
+const config: Config = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -21,7 +21,7 @@ module.exports = {
         linkedin: "#0a66c2",
         instagram: "#f60078",
         discord: "#5865F2",
-        github: "#333"
+        github: "#333",
       },
       gridTemplateRows: {
         'repeat-3-250': 'repeat(3, 250px)',
@@ -42,3 +42,5 @@ module.exports = {
   darkMode: "class",
   plugins: [nextui()],
 } satisfies Config;
+
+export default config;
