@@ -22,11 +22,11 @@ body,
 #root {
   min-height: 100vh;
 
-  #root>div:first-child {
+  /* #root>div:first-child {
     min-height: 100vh;
-  }
+  } */
 
-  #root>div>div {
+  /* #root>div>div {
     min-height: 100vh;
-  }
+  } */
 }

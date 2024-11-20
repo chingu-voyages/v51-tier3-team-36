@@ -1,9 +1,8 @@
 import { Avatar, Button, Card, CardBody, Input, Link } from '@nextui-org/react'
-import Groups from '../components/Groups.component'
+// import Groups from '../components/GroupCard.component'
 
 const Home = () => (
   <>
-    <Groups />
   </>
 )
 
