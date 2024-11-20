@@ -5,7 +5,7 @@ import { Matches } from 'class-validator';
 export class SetPasswordDto {
 
     
-  @ApiProperty({description: 'User password'})
+  @ApiProperty({description: 'New password'})
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/, {

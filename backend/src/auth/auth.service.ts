@@ -37,7 +37,7 @@ export class AuthService {
   }
 
   // manual registration and Google OAuth registration
-  async validateUserRegistration(user: RegisterDto): Promise<{ access_token: string; user: AuthenticatedUser }> {
+  async validateUserRegistration(user: RegisterDto): Promise<{ access_token: string;}> {
     const userCheck = await this.usersService.findByEmail(user.email);
 
     if (userCheck) {
@@ -56,7 +56,7 @@ export class AuthService {
   }
 
   // Google OAuth registration
-  async validateGoogleUser(googleUser: GoogleUserDto): Promise<{ access_token: string; user: AuthenticatedUser }> {
+  async validateGoogleUser(googleUser: GoogleUserDto): Promise<{ access_token: string; }> {
     let user = await this.usersService.findByGoogleId(googleUser.googleId);
 
     if (!user) {
@@ -80,19 +80,12 @@ export class AuthService {
     return this.login(user )
   }
 
-  async login(user: UserDocument): Promise<{ access_token: string; user: AuthenticatedUser }> {
+  async login(user: UserDocument): Promise<{ access_token: string; }> {
     const payload: JwtPayload = { email: user.email, sub: user._id.toString() };
     const token = this.jwtService.sign(payload)
 
-    const userData = {
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-    }
-
     return {
       access_token: token,
-      user: userData,
     };
   }
 }
